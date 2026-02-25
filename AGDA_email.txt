@@ -1,0 +1,33 @@
+Dear participants,
+
+Thank you for registering for **“Agda by Example: Programming and Proving with Dependent Types.”**
+
+This is a hands-on tutorial: we will start coding immediately.
+To make the session useful for everyone, please prepare your laptop **before arriving**.
+
+### What you need to do
+
+Please follow the short setup checklist here:
+
+**Installation instructions and checklist:** <INSERT WEB LINK HERE>
+
+The setup typically takes 10–20 minutes on macOS and a bit longer on Windows/Linux.
+
+### Very important
+
+Before the tutorial, please verify that this works on your machine:
+
+1. `agda --version` runs in a terminal
+2. The example file `Hello.agda` type-checks without errors
+
+If these two steps succeed, you are good to go.
+
+We unfortunately won’t be able to debug individual installation issues during the session — completing the setup beforehand ensures you will get the most out of the tutorial.
+
+If you encounter problems, please try to resolve them before the conference (or contact us at: <INSERT CONTACT EMAIL>).
+
+I’m looking forward to working with you!
+
+Best regards,
+Peter Thiemann
+Bobkonf 2026

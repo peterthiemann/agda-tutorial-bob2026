@@ -1,0 +1,485 @@
+\documentclass[aspectratio=169]{beamer}
+
+% Theme and basic setup
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{inconsolata} % nicer monospace
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\input{unicodeletters}
+
+% Listings setup (approximate Agda using Haskell-like settings)
+\lstdefinelanguage{Agda}{
+  morekeywords={data,record,module,where,open,import,let,in,
+    Set,Set₁,Set₂,postulate,with,pattern,mutual,infix,infixl,infixr,
+    forall,constructor,field,boxed,unquote,quote,unquoteDecl},
+  sensitive=true,
+  morecomment=[l]--,
+  morecomment=[s]{\{-}{-\}},
+  morestring=[b]"
+}
+
+\lstset{
+  language=Agda,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries\color{blue!70!black},
+  commentstyle=\itshape\color{gray!70!black},
+  stringstyle=\color{green!50!black},
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  breaklines=true,
+  tabsize=2,
+  literate=
+  {≡}{{$\equiv$}}1
+  {->}{{$\to$}}1
+}
+
+% Title info
+\title[Agda by Example]{Agda by Example:\\Programming and Proving with Dependent Types}
+\author{Peter Thiemann}
+\institute{Freiburg University}
+\date{March 13, 2026}
+
+\begin{document}
+
+%------------------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}{Motivation}
+  \begin{itemize}
+    \item We want software that is \textbf{correct by construction}, not “probably ok after tests”.
+    \item Types as \textbf{specifications}: function signatures as contracts.
+    \item Dependent types let types talk about \textbf{values}: lengths, bounds, invariants.
+    \item Agda fulfills two roles:
+      \begin{itemize}
+        \item a \textbf{total functional programming language}, and
+        \item an \textbf{interactive proof assistant}.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}{Agda in a Nutshell}
+\small
+\begin{itemize}
+  \item Agda is a proof assistant and dependently typed FP language based on
+  \textbf{intuitionistic Martin--L\"of type theory} (constructive proofs-as-programs).
+
+  \item Agda is named after the Swedish song "Hönan Agda" about a
+    hen, serving as a pun on the proof assistant Coq (another
+    dependently typed proof assistant of French origin).
+
+  \item Agda was primarily developed by \textbf{Ulf Norell}
+    (notably in his 2007 PhD work), taking inspiration from ALF,
+    then grown by a broader community into today’s widely used
+    system. 
+
+  \item Implemented in \textbf{Haskell}; emphasizes
+    \textbf{interactive development} (holes), and \textbf{dependent pattern matching}.
+
+  \item The \textbf{Agda standard library} provides reusable foundations
+  (data structures, algebra, equality reasoning) and strongly shapes idiomatic Agda.
+
+  \item Good for \textbf{mechanized metatheory}, \textbf{certified programming},
+    and teaching the tight link between \textbf{types, specs, and proofs}.
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}{What We Will Do (90 min)}
+  \begin{enumerate}
+    \item Warm-up: simple programs, total functions.
+    \item Inductive data types: lists, recursion.
+    \item Dependent types in action: vectors indexed by length.
+    \item Propositions as types: equality and proofs.
+    \item Case study: a small verified function.
+  \end{enumerate}
+  \vfill
+  \textbf{Goal:} Leave with a mental model for using types as specifications,
+  and how to explore that space using Agda.
+\end{frame}
+
+%------------------------------------------------------------
+\section{Getting Started in Agda}
+
+\begin{frame}{Agda as a Language + Proof Assistant}
+  \begin{itemize}
+    \item Source files: \texttt{.agda} or literate \texttt{.lagda.md}.
+    \item Interactive editing:
+      \begin{itemize}
+        \item Emacs, VSCode, etc.
+        \item Holes: typed as \texttt{?}, typeset as
+          \texttt{\{\!~\!\}}; most commands fill/refine holes.
+      \end{itemize}
+    \item Everything is total:
+      \begin{itemize}
+        \item Functions are defined by exhaustive pattern matching.
+        \item Termination is checked.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{Warm-Up: Simple Functions}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \lstinline!module Warmup where!
+
+\begin{lstlisting}
+open import Agda.Builtin.Nat
+
+double : Nat -> Nat
+double n = n + n
+
+triple : Nat -> Nat
+triple n = {!!}
+\end{lstlisting}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Exercise 1} (few minutes):
+      \begin{itemize}
+        \item Fill the hole for \texttt{triple}.
+        \item Check the types with \texttt{C-c C-,}.
+        \item Refine the hole with \texttt{C-c C-r}.
+        \item Experiment with \texttt{C-c C-n} to normalize expressions.
+      \end{itemize}
+      \vspace{1em}
+      \textbf{Key idea:} Types as a starting point; holes as “typed to-do items”.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------
+\section{Inductive Data Types}
+
+\begin{frame}[fragile]{Lists from Scratch}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+\begin{lstlisting}
+data List (A : Set) : Set where
+  []   : List A
+  _::_ : A -> List A -> List A
+
+length : {A : Set} -> List A -> Nat
+length []       = 0
+length (x :: xs) = 1 + length xs
+\end{lstlisting}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Key points:}
+      \begin{itemize}
+        \item Inductive data = constructors + recursion.
+        \item Types track element type (\texttt{A}), not size (yet).
+        \item Pattern matching drives computation.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{Appending Lists}
+\begin{lstlisting}
+append : {A : Set} -> List A -> List A -> List A
+append []       ys = ys
+append (x :: xs) ys = x :: append xs ys
+\end{lstlisting}
+
+  \textbf{Exercise 2:}
+  \begin{itemize}
+    \item Implement \texttt{reverse : \{A : Set\} -> List A -> List A}.
+    \item Use pattern matching and recursion; load the file and
+          let Agda check totality and termination.
+  \end{itemize}
+
+  \vfill
+  \textbf{Observation:}
+  \begin{itemize}
+    \item Types specify \emph{shape} of data, but not \emph{properties} like length.
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\section{Dependent Types in Action}
+
+\begin{frame}[fragile]{Vectors: Lists with Length in the Type}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+\begin{lstlisting}
+open import Agda.Builtin.Nat
+
+data Vec (A : Set) : Nat -> Set where
+  []   : Vec A 0
+  _::_ : {n : Nat} ->
+         A -> Vec A n -> Vec A (suc n)
+\end{lstlisting}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Idea:}
+      \begin{itemize}
+        \item \texttt{Vec A n} is a list of \texttt{A} \emph{indexed} by length \texttt{n}.
+        \item Indices (here: \texttt{Nat}) are values appearing in types.
+        \item Invariants like “length is preserved” become type-level facts.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{Mapping over Vectors}
+\begin{lstlisting}
+vmap :
+  {A B : Set} {n : Nat} ->
+  (A -> B) -> Vec A n -> Vec B n
+vmap f []        = []
+vmap f (x :: xs) = f x :: vmap f xs
+\end{lstlisting}
+
+  \textbf{Reading the type:}
+  \begin{itemize}
+    \item For any length \texttt{n}, if you give me a vector of \texttt{A} of length \texttt{n},
+    \item I return a vector of \texttt{B} of the \emph{same} length \texttt{n}.
+  \end{itemize}
+
+  \vfill
+  \textbf{Exercise 3:}
+  \begin{itemize}
+    \item Define \texttt{vappend : Vec A m -> Vec A n -> Vec A (m + n)}.
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\section{Propositions as Types}
+
+\begin{frame}[fragile]{Equality as a Type}
+  In Agda, propositional equality is a data type:
+
+\begin{lstlisting}
+data _≡_ {A : Set} (x : A) : A -> Set where
+  refl : x ≡ x
+\end{lstlisting}
+
+  \begin{itemize}
+    \item A value of type \texttt{x ≡ y} is evidence that \texttt{x} and \texttt{y} are equal.
+    \item There is only one constructor: \texttt{refl}, proving \texttt{x ≡ x}.
+    \item To prove \texttt{x ≡ y}, we typically normalize both sides and use \texttt{refl}.
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{A Simple Proof: Right Identity of +}
+\begin{lstlisting}
+open import Agda.Builtin.Nat
+open import Agda.Builtin.Equality
+
+zero-right-id : (n : Nat) -> n + 0 ≡ n
+zero-right-id zero    = refl
+zero-right-id (suc n) = cong suc (zero-right-id n)
+\end{lstlisting}
+
+  \textbf{Notes:}
+  \begin{itemize}
+    \item \texttt{cong} lifts equality through a function:
+\begin{lstlisting}
+cong : {A B : Set} (f : A -> B) {x y : A} ->
+       x ≡ y -> f x ≡ f y
+\end{lstlisting}
+    \item The proof is just a recursive function following the
+      structure of \texttt{Nat}.
+    \item It constitutes a proof by mathematical induction that $\forall
+      n. n + 0 = n$.
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{List Property: Appending []}
+\begin{columns}
+  \begin{column}{0.5\textwidth}
+\begin{lstlisting}
+length-append-[] :
+  {A : Set} (xs : List A) ->
+  length (append xs []) ≡ length xs
+length-append-[] [] = ?
+length-append-[] (x :: xs) = ?
+\end{lstlisting}
+    
+  \end{column}
+  \begin{column}{0.5\textwidth}
+    \textbf{Exercise 4:}
+    \begin{itemize}
+      \item Type this lemma and ask Agda for goals (holes).
+      \item Fill in the recursive case using \texttt{cong}.
+    \end{itemize}
+    \vspace{1em}
+    \textbf{Takeaway:}
+    \begin{itemize}
+      \item Proofs look like ordinary recursive functions.
+      \item The type encodes the property.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{List Property: Left and Right Id}
+\begin{columns}
+  \begin{column}{0.5\textwidth}
+\begin{lstlisting}
+empty-right-id :
+  {A : Set} (xs : List A) ->
+  append xs [] ≡ xs
+empty-right-id = ?
+
+empty-left-id :
+  {A : Set} (xs : List A) ->
+  append [] xs ≡ xs
+empty-left-id = ?
+\end{lstlisting}
+    
+  \end{column}
+  \begin{column}{0.5\textwidth}
+    \textbf{Exercise 4a:}
+    \begin{itemize}
+      \item Type the empty-right lemma and ask Agda for goals (holes).
+      \item Fill in the recursive case.
+    \end{itemize}
+    \vspace{1em}
+    \textbf{Exercise 4b:}
+    \begin{itemize}
+      \item Type the empty-left lemma and ask Agda for goals (holes).
+      \item Do you need induction?
+    \end{itemize}
+    \vspace{1em}
+    \pause
+    \textbf{Takeaway:}
+    \begin{itemize}
+      \item Some properties hold \emph{definitionally}, i.e., by normalizing according to function definitions.
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+%------------------------------------------------------------
+\section{Case Study: Verified Lookup}
+
+\begin{frame}[fragile]{Safe Indexing with \texttt{Fin}}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+\begin{lstlisting}
+data Fin : Nat -> Set where
+  fzero : {n : Nat} -> Fin (suc n)
+  fsuc  : {n : Nat} -> Fin n -> Fin (suc n)
+\end{lstlisting}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Idea:}
+      \begin{itemize}
+        \item \texttt{Fin n} represents numbers \texttt{0 .. n-1}.
+        \item This range corresponds to the domain of  \texttt{Vec A n}!
+        \item Combining \texttt{Fin n} with \texttt{Vec A n} yields safe lookup.
+        \item It is impossible to construct an out-of-bounds index. 
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile]{Lookup That Cannot Fail}
+\begin{lstlisting}
+lookup :
+  {A : Set} {n : Nat} ->
+  Fin n -> Vec A n -> A
+lookup fzero    (x :: xs) = x
+lookup (fsuc i) (x :: xs) = lookup i xs
+\end{lstlisting}
+
+  \textbf{Key observations:}
+  \begin{itemize}
+    \item No case for \texttt{[]} is needed: \texttt{Fin 0} is empty
+      (recognized by Agda).
+    \item No runtime bounds checking.
+    \item The type guarantees safety by construction.
+  \end{itemize}
+
+  \vfill
+  \textbf{Exercise 5:}
+  \begin{itemize}
+    \item Implement a small function using \texttt{lookup}
+          (e.g., get the head of a non-empty vector).
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}[fragile,fragile]
+  \frametitle{Challenge Problem}
+\begin{lstlisting}
+vsnoc : {A : Set} {n : Nat} -> Vec A n -> A -> Vec A (suc n)
+vsnoc xs x = {!!}
+
+vreverse : {A : Set} {n : Nat} -> Vec A n -> Vec A n
+vreverse [] = []
+vreverse (x :: xs) = vsnoc (vreverse xs) x
+\end{lstlisting}
+  \vfill
+  \textbf{Exercise 6 (challenge):}
+  \begin{itemize}
+    \item Try to implement a function \texttt{vsnoc} to attach a single
+      element to the \emph{end} of a vector. This function can be use
+      to implement \texttt{vreverse} to  reverse a vector.
+    \item Analyze the problem you run into
+  \end{itemize}
+\end{frame}
+%------------------------------------------------------------
+\section{Wrap-Up}
+
+\begin{frame}{What We Saw}
+  \begin{itemize}
+    \item \textbf{Inductive data} for structure (Nat, List, Vec).
+    \item \textbf{Dependent types} to encode invariants (length, bounds).
+    \item \textbf{Equality as a type} and small composable proofs.
+    \item \textbf{Safe APIs} by design:
+      \begin{itemize}
+        \item \texttt{Vec A n}, \texttt{Fin n}, \texttt{lookup}.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}{Takeaways for Day-to-Day Work}
+  After this tutorial, you should be able to:
+  \begin{itemize}
+    \item Encode key invariants in types to design safer APIs.
+    \item Formulate precise specifications as type signatures.
+    \item Apply proof-driven reasoning to structure and validate behavior.
+  \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------
+\begin{frame}{Where to Go Next}
+  \begin{itemize}
+    \item Agda standard library documentation.
+    \item “Programming Language Foundations in Agda” (PLFA).
+    \item Explore:
+      \begin{itemize}
+        \item More advanced dependently typed programming patterns.
+        \item Larger verification case studies: interpreters, DSLs, protocols.
+      \end{itemize}
+  \end{itemize}
+  \vfill
+  \centering
+  \textit{Thank you!}
+\end{frame}
+
+%------------------------------------------------------------
+\end{document}
