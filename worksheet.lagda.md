@@ -20,9 +20,50 @@ Use the holes (`{!!}`) with your editor’s Agda mode (e.g. Emacs or VSCode).
 
 module worksheet where
 
-open import Data.Nat      using (ℕ; zero; suc; _+_)
+-- open import Data.Nat      using (ℕ; zero; suc; _+_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 ```
+
+# 0. define the natural numbers
+
+
+```
+data ℕ : Set where
+  zero  : ℕ
+  suc   : ℕ → ℕ
+
+_ : ℕ
+_ = zero
+_ : ℕ
+_ = suc zero
+_ : ℕ
+_ = suc (suc zero)
+
+{-# BUILTIN NATURAL ℕ #-}
+
+```
+
+Implementing _+_ by induction on the first argument.
+
+```
+infixr 5 _+_
+infixr 6 _*_
+
+_+_ : ℕ → ℕ → ℕ
+zero + n = n
+suc m + n = suc (m + n)
+
+_*_ : ℕ → ℕ → ℕ
+zero * n = zero
+suc m * n = n + m * n
+```
+
+```
+_ : ℕ
+_ = 5 * 4
+```
+
+
 
 # 1. Warm-Up: Simple Functions (Slide: “Warm-Up: Simple Functions”)
 
@@ -38,22 +79,48 @@ double n = n + n
 -- Implement a function to triple a number n.
 
 triple : ℕ → ℕ
-triple n = {!!}
+triple n = 3 * n
+
+_ : ℕ
+_ = triple 42
 ```
 
 Try normalizing expressions like `double (suc (suc zero))` with your editor
 command (e.g. `C-c C-n` in Emacs).
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 2. Inductive Data Types: Lists (Slides: “Lists from Scratch” / “Appending Lists”)
 
 We define a polymorphic list type and basic functions.
 
+- [] empty
+- if L is a list and e is a value, then [ e ∷ L ]
+
 ```agda
 -- A simple polymorphic list type
+-- "generic linked list type"
 
 data List (A : Set) : Set where
-  []   : List A
-  _::_ : A → List A → List A
+  []   : List A                 -- "nil"
+  _::_ : A → List A → List A    -- "cons"
+
+_ : List ℕ
+_ = 42 :: []
 ```
 
 ## 2.1 length
@@ -63,7 +130,13 @@ data List (A : Set) : Set where
 -- Define the length of a list.
 
 length : {A : Set} → List A → ℕ
-length xs = {!!}
+length [] = zero
+length (_ :: xs) = suc (length xs)
+
+_ : ℕ
+_ = length {ℕ} []
+_ : ℕ
+_ = length (1 :: [])
 ```
 
 ## 2.2 append
@@ -75,8 +148,21 @@ length xs = {!!}
 -- all elements from ys.
 
 append : {A : Set} → List A → List A → List A
-append xs ys = {!!}
+append [] ys = ys
+append (x :: xs) ys = x :: append xs ys
 ```
+
+
+```
+lmap : {A B : Set}
+  → (A → B)
+  → (xs : List A)
+  → Σ (List B) (λ ys → length xs ≡ length ys)
+```
+
+
+
+
 
 ## 2.3 reverse (from the “Appending Lists” slide)
 
@@ -110,8 +196,9 @@ data Vec (A : Set) : ℕ → Set where
 vmap :
   {A B : Set} {n : ℕ} →
   (A → B) → Vec A n → Vec B n
-vmap f []        = {!!}
-vmap f (x :: xs) = {!!}
+  
+vmap f []        = []
+vmap f (x :: xs) = (f x) :: vmap f xs
 ```
 
 ## 3.2 vappend (exercise from the slide)
@@ -124,7 +211,8 @@ vmap f (x :: xs) = {!!}
 vappend :
   {A : Set} {m n : ℕ} →
   Vec A m → Vec A n → Vec A (m + n)
-vappend xs ys = {!!}
+vappend [] ys = ys
+vappend (x :: xs) ys = x :: vappend xs ys
 ```
 
 # 4. Propositions as Types: Equality (Slides: “Equality as a Type”, “A Simple Proof…”, “List Property…”)
